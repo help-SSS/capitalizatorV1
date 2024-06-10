@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        textarea, button, p, select {
+            width: 322px;
+            margin: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        #customCapitalization {
+            height: 65px; 
+            margin-top: -9px; 
+        }
+        #inputText, #outputText {
+            height: 300px;
+            margin-top: -9px;
+            font-family: Arial, sans-serif; /* Added font-family */
+        }
+        #copyButton, #updateButton {
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            width: 322px;
+            margin: 10px; 
+        }
+        #copyButton:hover, #updateButton:hover {
+            background-color: #45a049;
+        }
+        #languageSelectContainer {
+            height: 65px;
+            width: 341px;
+            margin: -10px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+        .admin {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        .admin textarea, .admin select, .admin button {
+            width: 90%;
+            max-width: 600px;
+        }
+        #loginContainer {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+        #adminButton {
+            background-color: #f44336;
+            color: white;
+            width: 322px;
+            margin: 10px;
+        }
+        #adminButton:hover {
+            background-color: #e53935;
+        }
+        #logoutButton {
+            background-color: #f44336;
+            color: white;
+            width: 322px;
+            margin: 10px;
+            display: none;
+        }
+        #logoutButton:hover {
+            background-color: #e53935;
+        }
+    </style>
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
+    <link rel="manifest" href="favicon/site.webmanifest">
+    <link rel="mask-icon" href="favicon/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+</head>
+<body>
+    <h5>Custom Capitalization</h5>
+    <textarea id="customCapitalization" placeholder="Enter custom capitalizations separated by commas (e.g., SSo, GGo)"></textarea>
+    <h5>Input Text</h5>
+    <textarea id="inputText" placeholder="Paste your text here..."></textarea>
+    <div id="languageSelectContainer">
+        <select id="languageSelect">
+            <option value="english">English</option>
+            <option value="french">French</option>
+            <option value="polish">Polish</option>
+            <option value="russian">Russian</option>
+            <option value="italian">Italian</option>
+            <option value="spanish">Spanish</option>
+            <option value="portuguese">Portuguese</option>
+        </select>
+    </div>
+    <button id="updateButton">Update Result</button>
+    <h5>Output Text</h5>
+    <textarea id="outputText" placeholder="Text with capitalized words will be here..." readonly></textarea>
+    <button id="copyButton">Copy Text</button>
+    <button id="adminButton">Admin Panel</button>
+    <button id="logoutButton">Logout</button>
+    <div id="loginContainer">
+        <input type="password" id="adminPassword" placeholder="Enter admin password">
+        <button id="loginButton">Login</button>
+    </div>
+    <div id="adminPanel" class="admin">
+        <h5>Admin Panel</h5>
+        <select id="adminLanguageSelect">
+            <option value="english">English</option>
+            <option value="french">French</option>
+            <option value="polish">Polish</option>
+            <option value="russian">Russian</option>
+            <option value="italian">Italian</option>
+            <option value="spanish">Spanish</option>
+            <option value="portuguese">Portuguese</option>
+        </select>
+        <textarea id="adminPrepositions" placeholder="Enter prepositions separated by commas"></textarea>
+        <textarea id="adminExceptions" placeholder="Enter exceptions separated by commas"></textarea>
+        <button id="saveAdminChanges">Save Changes</button>
+    </div>
+    <script>
+        const prepositionsAndArticles = JSON.parse(localStorage.getItem('prepositionsAndArticles')) || {
+            english: {
+                prepositions: ["about", "above", "across", "after", "against", "along", "amid", "among", "around", 
+                    "as", "at", "before", "behind", "below", "beneath", "beside", "between", "beyond", "but", "by", "concerning", "considering", "despite", 
+                    "down", "during", "except", "for", "from", "in", "inside", "into", "like", "near", "of", "off", "on", "onto", "out", "outside", "over", 
+                    "past", "regarding", "round", "since", "through", "throughout", "till", "to", "toward", "under", "underneath", "until", "unto", "up", 
+                    "upon", "with", "within", "without"],
+                exceptions: ["ab"]
+            },
+            french: {
+                prepositions: ["le", "la", "l'", "les", "un", "une", "des", "a", "de", "dans", "sous", "sur", "avec", "sans", 
+                    "pour", "chez", "en", "vers", "par", "contre", "devant", "derriere", "entre", "jusqu'a", "depuis", "pres de", "loin de"],
+                exceptions: ['d', 'l']
+            },
+            polish: {
+                prepositions: ["w", "na", "do", "z", "ze", "od", "przy", "po", "o", "u", "dla", "bez", "nad", "pod", "przez", "za", "między", "wśród", "obok"],
+                exceptions: []
+            },
+            russian: {
+                prepositions: ["а", "в", "на", "под", "за", "перед", "между", "над", "около", "о", "от", "при", "через", "среди", "вокруг", "с", "без", "кроме", 
+                    "после", "из-за", "вдоль", "внутри", "снаружи", "у"],
+                exceptions: []
+            },
+            italian: {
+                prepositions: ["del", "dello", "della", "dell’", "dei", "degli", "delle", "a", "al", "allo", "alla", "all’", "ai", "agli", "alle", "da", "dal", "dallo", "dalla", "dall’", "dai", "dagli", "dalle", "in", "nel", "nello", "nella", "nell’", "nei", "negli", "nelle", "con", "col", "collo", "colla", "l’", "coi", "cogli", "colle", "su", "sul", "sullo", "sulla", "sull’", "sui", "sugli", "sulle"],
+                exceptions: ["del"]
+            },
+            spanish: {
+                prepositions: ["el", "la", "los", "las", "un", "una", "unos", "unas", "a", "ante", "bajo", "cabe", "con", "contra", "de", "desde", "en", "entre", 
+                    "hacia", "hasta", "para", "por", "segun", "sin", "so", "sobre", "tras", "durante", "mediante"],
+                exceptions: []
+            },
+            portuguese: {
+                prepositions: ["o", "a", "os", "as", "um", "uma", "uns", "umas", "a", "apos", "ate", "com", "contra", "de", "desde", "em", "entre", "para", 
+                    "per", "tra", "fra", "con", "su", "per", "tra", "fra"],
+                exceptions: []
+            }
+        };
+
+        const languageSelect = document.getElementById('languageSelect');
+        const inputText = document.getElementById('inputText');
+        const outputText = document.getElementById('outputText');
+        const customCapitalizationInput = document.getElementById('customCapitalization');
+        const copyButton = document.getElementById('copyButton');
+        const updateButton = document.getElementById('updateButton');
+        const adminButton = document.getElementById('adminButton');
+        const logoutButton = document.getElementById('logoutButton');
+        const loginContainer = document.getElementById('loginContainer');
+        const adminPanel = document.getElementById('adminPanel');
+        const adminPassword = document.getElementById('adminPassword');
+        const loginButton = document.getElementById('loginButton');
+        const adminLanguageSelect = document.getElementById('adminLanguageSelect');
+        const adminPrepositions = document.getElementById('adminPrepositions');
+        const adminExceptions = document.getElementById('adminExceptions');
+        const saveAdminChanges = document.getElementById('saveAdminChanges');
+
+        const ADMIN_PASSWORD = 'qa123'; // Replace with a secure password
+
+function updateText() {
+    const prepositionsAndArticlesForLanguage = prepositionsAndArticles[languageSelect.value];
+    const prepositions = prepositionsAndArticlesForLanguage.prepositions || [];
+    const exceptions = prepositionsAndArticlesForLanguage.exceptions || [];
+    const customCapitalizations = parseCustomCapitalizations(customCapitalizationInput.value);
+    const paragraphs = inputText.value.split('\n');
+
+    const capitalizedParagraphs = paragraphs.map(paragraph => {
+        // Добавляем пробел после знаков препинания, если его нет
+        paragraph = paragraph.replace(/([.!?…;])(?!\s)/g, '$1 ');
+
+        // Удаляем дубликаты пробелов после знаков препинания
+        paragraph = paragraph.replace(/([.!?…;])\s+/g, '$1 ');
+
+        // Французский: добавляем пробел перед ! ? ; :
+        if (languageSelect.value === 'french') {
+            paragraph = paragraph.replace(/\s*([!?;:])/g, ' $1');
+        }
+
+        // Разбиваем абзац на предложения
+        const sentences = paragraph.split(/(?<=[.!?…;])\s+/);
+
+        // Капитализируем слова в предложениях
+        const capitalizedSentences = sentences.map(sentence => {
+            const words = sentence.split(' ');
+            const capitalizedWords = words.map((word, wordIndex) => {
+                // Капитализируем слово или оставляем его без изменений в зависимости от условий
+                const wordParts = word.split("'");
+                const capitalizedParts = wordParts.map((part, partIndex) => {
+                    const wordWithoutPunctuation = part.replace(/[^\w\s]|_/g, "");
+                    const punctuation = part.substring(wordWithoutPunctuation.length);
+                    let capitalizedPart;
+
+                    if (wordIndex === 0) {
+                        if (customCapitalizations.hasOwnProperty(wordWithoutPunctuation.toLowerCase())) {
+                            capitalizedPart = customCapitalizations[wordWithoutPunctuation.toLowerCase()] + punctuation;
+                        } else {
+                            capitalizedPart = part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+                        }
+                    } else {
+                        if (prepositions.includes(wordWithoutPunctuation.toLowerCase()) && partIndex === wordParts.length - 1) {
+                            capitalizedPart = part.toLowerCase();
+                        } else if (exceptions.includes(wordWithoutPunctuation.toLowerCase()) && partIndex !== wordParts.length - 1) {
+                            capitalizedPart = part.toLowerCase();
+                        } else if (exceptions.includes(wordWithoutPunctuation.toLowerCase())) {
+                            capitalizedPart = part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+                        } else if (customCapitalizations.hasOwnProperty(wordWithoutPunctuation.toLowerCase())) {
+                            capitalizedPart = customCapitalizations[wordWithoutPunctuation.toLowerCase()] + punctuation;
+                        } else if (part.includes("-")) {
+                            const hyphenatedParts = part.split("-");
+                            capitalizedPart = hyphenatedParts.map(hyphenatedPart => {
+                                return hyphenatedPart.charAt(0).toUpperCase() + hyphenatedPart.slice(1).toLowerCase();
+                            }).join("-");
+                        } else {
+                            capitalizedPart = part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+                        }
+                    }
+
+                    return capitalizedPart;
+                });
+                return capitalizedParts.join("'");
+            });
+            return capitalizedWords.join(' ');
+        });
+        return capitalizedSentences.join(' ');
+    });
+
+    const capitalizedText = capitalizedParagraphs.join('\n');
+    outputText.value = capitalizedText;
+}
+
+
+
+
+
+
+        function parseCustomCapitalizations(customCapitalizations) {
+            const customCaps = {};
+            const words = customCapitalizations.split(',').map(word => word.trim());
+            words.forEach(word => {
+                if (word !== '') {
+                    const wordWithoutPunctuation = word.replace(/[^\w\s]|_/g, "");
+                    customCaps[wordWithoutPunctuation.toLowerCase()] = word;
+                }
+            });
+            return customCaps;
+        }
+
+        function loadAdminData(language) {
+            const prepositions = prepositionsAndArticles[language].prepositions.join(', ');
+            const exceptions = prepositionsAndArticles[language].exceptions.join(', ');
+            adminPrepositions.value = prepositions;
+            adminExceptions.value = exceptions;
+        }
+
+        function saveAdminData() {
+            console.log('saveAdminData called'); // Debugging message
+            const language = adminLanguageSelect.value;
+            console.log('Selected language:', language); // Debugging message
+            const prepositions = adminPrepositions.value.split(',').map(item => item.trim());
+            const exceptions = adminExceptions.value.split(',').map(item => item.trim());
+            console.log('Prepositions:', prepositions); // Debugging message
+            console.log('Exceptions:', exceptions); // Debugging message
+
+            prepositionsAndArticles[language].prepositions = prepositions;
+            prepositionsAndArticles[language].exceptions = exceptions;
+            localStorage.setItem('prepositionsAndArticles', JSON.stringify(prepositionsAndArticles));
+
+            // Verify if data is saved correctly
+            console.log('Saved data:', JSON.parse(localStorage.getItem('prepositionsAndArticles'))); // Debugging message
+
+            updateText();
+
+            // Show alert message
+            alert('Changes have been saved successfully!');
+        }
+
+        inputText.addEventListener('input', updateText);
+        customCapitalizationInput.addEventListener('input', updateText);
+        updateButton.addEventListener('click', updateText);
+        copyButton.addEventListener('click', function() {
+            outputText.select();
+            document.execCommand('copy');
+        });
+
+        adminButton.addEventListener('click', function() {
+            console.log('Admin button clicked'); // Debugging message
+            loginContainer.style.display = 'flex';
+            adminButton.style.display = 'none';
+        });
+
+        loginButton.addEventListener('click', function() {
+            console.log('Login button clicked'); // Debugging message
+            if (adminPassword.value === ADMIN_PASSWORD) {
+                loginContainer.style.display = 'none';
+                adminPanel.style.display = 'flex';
+                adminButton.style.display = 'none';
+                logoutButton.style.display = 'block';
+                loadAdminData(adminLanguageSelect.value);
+            } else {
+                alert('Incorrect password');
+            }
+        });
+
+        adminLanguageSelect.addEventListener('change', function() {
+            loadAdminData(adminLanguageSelect.value);
+        });
+
+        saveAdminChanges.addEventListener('click', saveAdminData);
+
+        logoutButton.addEventListener('click', function() {
+            adminPanel.style.display = 'none';
+            adminButton.style.display = 'block';
+            logoutButton.style.display = 'none';
+        });
+
+        updateText(); // Update initially based on default language
+    </script>
+</body>
+</html>
